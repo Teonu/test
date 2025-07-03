@@ -90,56 +90,57 @@ app.get('/widget.js', (req, res) => {
     return;
   }
 
-  // Widget configuration
+  // Get configuration from script tag
+  const currentScript = document.currentScript || (function() {
+    const scripts = document.getElementsByTagName('script');
+    return scripts[scripts.length - 1];
+  })();
+
+  // Extract configuration from script tag attributes or URL parameters
+  const scriptSrc = currentScript ? currentScript.src : '';
+  const urlParams = new URLSearchParams(scriptSrc.split('?')[1] || '');
+  
+  // Widget configuration with defaults
   const config = {
     apiEndpoint: '${req.protocol}://${req.get('host')}/api',
-    primaryColor: '${config.widgetConfig.primaryColor}',
-    position: '${config.widgetConfig.position}',
-    title: '${config.widgetConfig.title}'
+    assistantId: currentScript?.getAttribute('data-assistant-id') || urlParams.get('assistant') || '',
+    primaryColor: currentScript?.getAttribute('data-color') || urlParams.get('color') || '#3B82F6',
+    position: currentScript?.getAttribute('data-position') || urlParams.get('position') || 'bottom-right',
+    title: currentScript?.getAttribute('data-title') || urlParams.get('title') || 'Chat Support',
+    welcomeMessage: currentScript?.getAttribute('data-welcome') || urlParams.get('welcome') || 'Hello! How can I help you today?'
   };
+
+  // Validate required configuration
+  if (!config.assistantId) {
+    console.error('ChatbotWidget: Assistant ID is required. Please add data-assistant-id attribute to the script tag.');
+    return;
+  }
 
   // Widget state
   let isOpen = false;
   let messages = [];
   let threadId = null;
-  let welcomeMessage = '${config.welcomeMessage}';
   let isLoading = false;
-
-  // Load widget config from server
-  fetch(config.apiEndpoint + '/widget/config')
-    .then(res => res.json())
-    .then(data => {
-      if (data.welcomeMessage) {
-        welcomeMessage = data.welcomeMessage;
-      }
-      if (data.widgetConfig) {
-        Object.assign(config, data.widgetConfig);
-        updateWidgetStyles();
-      }
-    })
-    .catch(err => {
-      console.error('Failed to load widget config:', err);
-    });
 
   function createWidgetHTML() {
     const container = document.createElement('div');
-    container.id = 'chatbot-widget-container';
+    container.id = 'chatbot-widget-container-' + config.assistantId;
     
     const positionClass = config.position === 'bottom-left' ? 'bottom: 20px; left: 20px;' : 'bottom: 20px; right: 20px;';
     
     container.innerHTML = \`
-      <div id="chatbot-container" style="position: fixed; \${positionClass} z-index: 9999; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      <div id="chatbot-container-\${config.assistantId}" style="position: fixed; \${positionClass} z-index: 9999; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
         <!-- Chat Window -->
-        <div id="chat-window" style="display: none; margin-bottom: 16px; background: white; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); border: 1px solid #e5e7eb; width: 320px; height: 400px; display: flex; flex-direction: column; animation: slideUp 0.3s ease-out;">
+        <div id="chat-window-\${config.assistantId}" style="display: none; margin-bottom: 16px; background: white; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); border: 1px solid #e5e7eb; width: 320px; height: 400px; display: flex; flex-direction: column; animation: slideUp 0.3s ease-out;">
           <!-- Header -->
-          <div id="chat-header" style="padding: 16px; border-radius: 12px 12px 0 0; color: white; display: flex; align-items: center; justify-content: space-between; background: \${config.primaryColor};">
+          <div id="chat-header-\${config.assistantId}" style="padding: 16px; border-radius: 12px 12px 0 0; color: white; display: flex; align-items: center; justify-content: space-between; background: \${config.primaryColor};">
             <div style="display: flex; align-items: center; gap: 8px;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
               </svg>
               <span style="font-weight: 500;">\${config.title}</span>
             </div>
-            <button id="close-chat" style="padding: 4px; background: rgba(255,255,255,0.2); border: none; border-radius: 4px; color: white; cursor: pointer; transition: background 0.2s;">
+            <button id="close-chat-\${config.assistantId}" style="padding: 4px; background: rgba(255,255,255,0.2); border: none; border-radius: 4px; color: white; cursor: pointer; transition: background 0.2s;">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="18" y1="6" x2="6" y2="18"/>
                 <line x1="6" y1="6" x2="18" y2="18"/>
@@ -148,15 +149,15 @@ app.get('/widget.js', (req, res) => {
           </div>
           
           <!-- Messages -->
-          <div id="chat-messages" style="flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+          <div id="chat-messages-\${config.assistantId}" style="flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px;">
             <!-- Messages will be added here -->
           </div>
           
           <!-- Input -->
           <div style="padding: 16px; border-top: 1px solid #e5e7eb;">
             <div style="display: flex; gap: 8px;">
-              <input id="chat-input" type="text" placeholder="Type your message..." style="flex: 1; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; outline: none; font-size: 14px; transition: border-color 0.2s;" />
-              <button id="send-message" style="padding: 10px; background: \${config.primaryColor}; color: white; border: none; border-radius: 8px; cursor: pointer; transition: opacity 0.2s; min-width: 44px; display: flex; align-items: center; justify-content: center;">
+              <input id="chat-input-\${config.assistantId}" type="text" placeholder="Type your message..." style="flex: 1; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; outline: none; font-size: 14px; transition: border-color 0.2s;" />
+              <button id="send-message-\${config.assistantId}" style="padding: 10px; background: \${config.primaryColor}; color: white; border: none; border-radius: 8px; cursor: pointer; transition: opacity 0.2s; min-width: 44px; display: flex; align-items: center; justify-content: center;">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <line x1="22" y1="2" x2="11" y2="13"/>
                   <polygon points="22,2 15,22 11,13 2,9"/>
@@ -167,11 +168,11 @@ app.get('/widget.js', (req, res) => {
         </div>
         
         <!-- Chat Button -->
-        <button id="chat-button" style="width: 60px; height: 60px; background: \${config.primaryColor}; color: white; border: none; border-radius: 50%; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; position: relative;">
-          <svg id="chat-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <button id="chat-button-\${config.assistantId}" style="width: 60px; height: 60px; background: \${config.primaryColor}; color: white; border: none; border-radius: 50%; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; position: relative;">
+          <svg id="chat-icon-\${config.assistantId}" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
           </svg>
-          <svg id="close-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+          <svg id="close-icon-\${config.assistantId}" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
             <line x1="18" y1="6" x2="6" y2="18"/>
             <line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
@@ -183,28 +184,11 @@ app.get('/widget.js', (req, res) => {
     attachEventListeners();
   }
 
-  function updateWidgetStyles() {
-    const header = document.getElementById('chat-header');
-    const button = document.getElementById('chat-button');
-    const sendButton = document.getElementById('send-message');
-    
-    if (header) header.style.background = config.primaryColor;
-    if (button) button.style.background = config.primaryColor;
-    if (sendButton) sendButton.style.background = config.primaryColor;
-    
-    // Update position
-    const container = document.getElementById('chatbot-container');
-    if (container) {
-      const positionClass = config.position === 'bottom-left' ? 'bottom: 20px; left: 20px;' : 'bottom: 20px; right: 20px;';
-      container.style.cssText = container.style.cssText.replace(/bottom: 20px; (left|right): 20px;/, positionClass);
-    }
-  }
-
   function attachEventListeners() {
-    const chatButton = document.getElementById('chat-button');
-    const closeChat = document.getElementById('close-chat');
-    const chatInput = document.getElementById('chat-input');
-    const sendButton = document.getElementById('send-message');
+    const chatButton = document.getElementById('chat-button-' + config.assistantId);
+    const closeChat = document.getElementById('close-chat-' + config.assistantId);
+    const chatInput = document.getElementById('chat-input-' + config.assistantId);
+    const sendButton = document.getElementById('send-message-' + config.assistantId);
 
     chatButton?.addEventListener('click', toggleChat);
     closeChat?.addEventListener('click', () => toggleChat(false));
@@ -238,9 +222,9 @@ app.get('/widget.js', (req, res) => {
 
   function toggleChat(forceState = null) {
     isOpen = forceState !== null ? forceState : !isOpen;
-    const chatWindow = document.getElementById('chat-window');
-    const chatIcon = document.getElementById('chat-icon');
-    const closeIcon = document.getElementById('close-icon');
+    const chatWindow = document.getElementById('chat-window-' + config.assistantId);
+    const chatIcon = document.getElementById('chat-icon-' + config.assistantId);
+    const closeIcon = document.getElementById('close-icon-' + config.assistantId);
     
     if (isOpen) {
       chatWindow.style.display = 'flex';
@@ -248,12 +232,12 @@ app.get('/widget.js', (req, res) => {
       closeIcon.style.display = 'block';
       
       if (messages.length === 0) {
-        addMessage(welcomeMessage, false);
+        addMessage(config.welcomeMessage, false);
       }
       
       // Focus input
       setTimeout(() => {
-        document.getElementById('chat-input')?.focus();
+        document.getElementById('chat-input-' + config.assistantId)?.focus();
       }, 100);
     } else {
       chatWindow.style.display = 'none';
@@ -263,7 +247,7 @@ app.get('/widget.js', (req, res) => {
   }
 
   function addMessage(text, isUser) {
-    const messagesContainer = document.getElementById('chat-messages');
+    const messagesContainer = document.getElementById('chat-messages-' + config.assistantId);
     const messageElement = document.createElement('div');
     
     messageElement.style.display = 'flex';
@@ -300,9 +284,9 @@ app.get('/widget.js', (req, res) => {
   }
 
   function showTypingIndicator() {
-    const messagesContainer = document.getElementById('chat-messages');
+    const messagesContainer = document.getElementById('chat-messages-' + config.assistantId);
     const typingElement = document.createElement('div');
-    typingElement.id = 'typing-indicator';
+    typingElement.id = 'typing-indicator-' + config.assistantId;
     typingElement.style.display = 'flex';
     typingElement.style.justifyContent = 'flex-start';
     typingElement.style.animation = 'fadeIn 0.3s ease-out';
@@ -322,15 +306,15 @@ app.get('/widget.js', (req, res) => {
   }
 
   function hideTypingIndicator() {
-    const typingElement = document.getElementById('typing-indicator');
+    const typingElement = document.getElementById('typing-indicator-' + config.assistantId);
     if (typingElement) {
       typingElement.remove();
     }
   }
 
   function sendMessage() {
-    const input = document.getElementById('chat-input');
-    const sendButton = document.getElementById('send-message');
+    const input = document.getElementById('chat-input-' + config.assistantId);
+    const sendButton = document.getElementById('send-message-' + config.assistantId);
     const message = input.value.trim();
     
     if (!message || isLoading) return;
@@ -343,7 +327,7 @@ app.get('/widget.js', (req, res) => {
     
     showTypingIndicator();
     
-    // Send to API
+    // Send to API with assistant ID
     fetch(config.apiEndpoint + '/chat', {
       method: 'POST',
       headers: {
@@ -351,7 +335,8 @@ app.get('/widget.js', (req, res) => {
       },
       body: JSON.stringify({
         message: message,
-        threadId: threadId
+        threadId: threadId,
+        assistantId: config.assistantId
       }),
     })
     .then(response => response.json())
@@ -397,7 +382,7 @@ app.get('/widget.js', (req, res) => {
       to { opacity: 1; transform: translateY(0); }
     }
     
-    #chat-input:focus {
+    #chat-input-\${config.assistantId}:focus {
       border-color: \${config.primaryColor} !important;
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
     }
@@ -411,19 +396,26 @@ app.get('/widget.js', (req, res) => {
     createWidgetHTML();
   }
 
-  // Expose widget API
-  window.ChatbotWidget = {
+  // Expose widget API with unique namespace
+  const widgetId = 'ChatbotWidget_' + config.assistantId.replace(/[^a-zA-Z0-9]/g, '_');
+  window[widgetId] = {
     open: () => toggleChat(true),
     close: () => toggleChat(false),
     toggle: () => toggleChat(),
     isOpen: () => isOpen,
     sendMessage: (text) => {
       if (text) {
-        document.getElementById('chat-input').value = text;
+        document.getElementById('chat-input-' + config.assistantId).value = text;
         sendMessage();
       }
-    }
+    },
+    config: config
   };
+
+  // Also expose as generic ChatbotWidget if it doesn't exist
+  if (!window.ChatbotWidget) {
+    window.ChatbotWidget = window[widgetId];
+  }
 })();
 `;
 
@@ -491,10 +483,14 @@ app.get('/api/widget/config', (req, res) => {
 });
 
 app.post('/api/chat', async (req, res) => {
-  const { message, threadId } = req.body;
+  const { message, threadId, assistantId } = req.body;
   
-  if (!config.apiKey || !config.assistantId) {
-    return res.status(400).json({ error: 'Chatbot not configured. Please contact the administrator.' });
+  if (!config.apiKey) {
+    return res.status(400).json({ error: 'OpenAI API key not configured. Please contact the administrator.' });
+  }
+
+  if (!assistantId) {
+    return res.status(400).json({ error: 'Assistant ID is required.' });
   }
 
   try {
@@ -520,9 +516,9 @@ app.post('/api/chat', async (req, res) => {
       content: message,
     });
 
-    // Run the assistant
+    // Run the assistant with the provided assistant ID
     const run = await openai.beta.threads.runs.create(thread.id, {
-      assistant_id: config.assistantId,
+      assistant_id: assistantId,
     });
 
     // Wait for completion with timeout
@@ -553,7 +549,11 @@ app.post('/api/chat', async (req, res) => {
     }
   } catch (error) {
     console.error('Chat error:', error);
-    res.status(500).json({ error: 'Failed to process chat message' });
+    if (error.message.includes('No assistant found')) {
+      res.status(400).json({ error: 'Invalid Assistant ID. Please check your configuration.' });
+    } else {
+      res.status(500).json({ error: 'Failed to process chat message' });
+    }
   }
 });
 

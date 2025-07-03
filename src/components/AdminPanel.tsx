@@ -211,19 +211,19 @@ const AdminPanel: React.FC = () => {
         </div>
       </div>
 
-      {/* Configuration Status */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-6">
+      {/* Multi-Assistant System Info */}
+      <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200 p-6">
         <div className="flex items-start space-x-3">
-          <div className="bg-blue-100 rounded-lg p-2">
-            <AlertCircle className="h-6 w-6 text-blue-600" />
+          <div className="bg-green-100 rounded-lg p-2">
+            <CheckCircle className="h-6 w-6 text-green-600" />
           </div>
           <div>
-            <h3 className="font-medium text-blue-900 mb-2">Configuration Status</h3>
-            <div className="text-sm text-blue-800 space-y-2">
-              <p>✅ <strong>Backend Server:</strong> Running on Render.com</p>
-              <p>✅ <strong>Environment Variables:</strong> Configured securely in Render</p>
-              <p>ℹ️ <strong>API Keys:</strong> Stored safely as environment variables (not visible here)</p>
-              <p>🎨 <strong>Widget Settings:</strong> Customize appearance and messages below</p>
+            <h3 className="font-medium text-green-900 mb-2">Multi-Assistant System Active</h3>
+            <div className="text-sm text-green-800 space-y-2">
+              <p>✅ <strong>API Key:</strong> Configured securely on server (shared by all chatbots)</p>
+              <p>✅ <strong>Assistant IDs:</strong> Now configured in embed code (different for each chatbot)</p>
+              <p>✅ <strong>Multiple Chatbots:</strong> Use different Assistant IDs for different purposes</p>
+              <p>ℹ️ <strong>Configuration:</strong> Only API key and default settings managed here</p>
             </div>
           </div>
         </div>
@@ -234,35 +234,35 @@ const AdminPanel: React.FC = () => {
         <h3 className="text-lg font-medium text-gray-900 mb-4">OpenAI Configuration</h3>
         
         <div className="space-y-4">
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-center space-x-2">
-              <CheckCircle className="h-5 w-5 text-green-600" />
-              <span className="font-medium text-green-800">OpenAI Integration Status</span>
+              <CheckCircle className="h-5 w-5 text-blue-600" />
+              <span className="font-medium text-blue-800">Server Configuration Status</span>
             </div>
-            <div className="mt-2 text-sm text-green-700 space-y-1">
+            <div className="mt-2 text-sm text-blue-700 space-y-1">
               <p>• API Key: {config.hasApiKey ? 'Configured ✅' : 'Not configured ❌'}</p>
-              <p>• Assistant ID: {config.assistantId ? 'Configured ✅' : 'Not configured ❌'}</p>
-              <p>• Backend: Connected to Render.com ✅</p>
+              <p>• Backend Server: Connected ✅</p>
+              <p>• Multi-Assistant Support: Active ✅</p>
+              <p>• Environment Variables: Secure ✅</p>
             </div>
           </div>
 
-          {(!config.hasApiKey || !config.assistantId) && (
+          {!config.hasApiKey && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <div className="flex items-start space-x-3">
                 <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
                 <div>
-                  <h4 className="font-medium text-yellow-800">Configuration Required</h4>
+                  <h4 className="font-medium text-yellow-800">API Key Required</h4>
                   <p className="text-sm text-yellow-700 mt-1">
-                    OpenAI credentials need to be configured in your Render.com environment variables:
+                    OpenAI API key needs to be configured in your Render.com environment variables:
                   </p>
                   <div className="mt-2 text-sm text-yellow-700">
                     <p>1. Go to your Render.com dashboard</p>
                     <p>2. Select your chatbot backend service</p>
                     <p>3. Go to Environment tab</p>
-                    <p>4. Add/update these variables:</p>
+                    <p>4. Add this variable:</p>
                     <div className="bg-yellow-100 p-2 rounded mt-2 font-mono text-xs">
-                      OPENAI_API_KEY=your_actual_api_key<br/>
-                      ASSISTANT_ID=your_actual_assistant_id
+                      OPENAI_API_KEY=your_actual_api_key
                     </div>
                   </div>
                 </div>
@@ -272,14 +272,17 @@ const AdminPanel: React.FC = () => {
         </div>
       </div>
 
-      {/* Widget Configuration */}
+      {/* Default Widget Configuration */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Widget Configuration</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Default Widget Settings</h3>
+        <p className="text-sm text-gray-600 mb-4">
+          These are default settings. Each chatbot can override these in the embed code.
+        </p>
         
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Welcome Message
+              Default Welcome Message
             </label>
             <textarea
               value={config.welcomeMessage}
@@ -292,7 +295,7 @@ const AdminPanel: React.FC = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Widget Title
+              Default Widget Title
             </label>
             <input
               type="text"
@@ -308,7 +311,7 @@ const AdminPanel: React.FC = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Primary Color
+              Default Primary Color
             </label>
             <div className="flex space-x-3">
               <input
@@ -335,7 +338,7 @@ const AdminPanel: React.FC = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Position
+              Default Position
             </label>
             <select
               value={config.widgetConfig.position}
@@ -352,6 +355,31 @@ const AdminPanel: React.FC = () => {
         </div>
       </div>
 
+      {/* Assistant ID Information */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Assistant ID Configuration</h3>
+        
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-start space-x-3">
+            <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+            <div>
+              <h4 className="font-medium text-blue-800">New System: Assistant IDs in Embed Code</h4>
+              <div className="mt-2 text-sm text-blue-700 space-y-2">
+                <p>Assistant IDs are now configured directly in the embed code, not here on the server.</p>
+                <p><strong>Benefits:</strong></p>
+                <ul className="list-disc list-inside ml-4 space-y-1">
+                  <li>Use multiple different assistants with one server</li>
+                  <li>No server restart needed when adding new chatbots</li>
+                  <li>Each website can have different assistants</li>
+                  <li>Easy to manage and deploy</li>
+                </ul>
+                <p><strong>Go to the "Embed Code" tab to configure your chatbots with different Assistant IDs.</strong></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Save Button */}
       <div className="flex justify-end">
         <button
@@ -360,7 +388,7 @@ const AdminPanel: React.FC = () => {
           className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <Save className="h-4 w-4" />
-          <span>{isSaving ? 'Saving...' : 'Save Configuration'}</span>
+          <span>{isSaving ? 'Saving...' : 'Save Default Settings'}</span>
         </button>
       </div>
 

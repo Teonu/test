@@ -1,11 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { Copy, Code, ExternalLink, AlertCircle, CheckCircle } from 'lucide-react';
+import { Copy, Code, ExternalLink, AlertCircle, CheckCircle, Plus, Trash2 } from 'lucide-react';
 import { API_BASE_URL } from '../config/api';
 
+interface ChatbotConfig {
+  id: string;
+  assistantId: string;
+  title: string;
+  primaryColor: string;
+  position: string;
+  welcomeMessage: string;
+}
+
 const EmbedCode: React.FC = () => {
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState('');
   const [backendUrl, setBackendUrl] = useState('');
   const [isValidUrl, setIsValidUrl] = useState(false);
+  const [chatbots, setChatbots] = useState<ChatbotConfig[]>([
+    {
+      id: '1',
+      assistantId: '',
+      title: 'Customer Support',
+      primaryColor: '#3B82F6',
+      position: 'bottom-right',
+      welcomeMessage: 'Hello! How can I help you today?'
+    }
+  ]);
 
   useEffect(() => {
     // Extract base URL from API_BASE_URL
@@ -29,50 +48,82 @@ const EmbedCode: React.FC = () => {
     validateUrl(url);
   };
 
-  // Simple embed code that just loads the dynamic script
-  const embedCode = `<!-- Chatbot Widget - Simple Integration -->
-<script src="${backendUrl}/widget.js" async></script>`;
+  const addChatbot = () => {
+    const newChatbot: ChatbotConfig = {
+      id: Date.now().toString(),
+      assistantId: '',
+      title: 'New Chatbot',
+      primaryColor: '#3B82F6',
+      position: 'bottom-right',
+      welcomeMessage: 'Hello! How can I help you today?'
+    };
+    setChatbots([...chatbots, newChatbot]);
+  };
 
-  // Advanced embed code with customization options
-  const advancedEmbedCode = `<!-- Chatbot Widget - Advanced Integration -->
+  const removeChatbot = (id: string) => {
+    setChatbots(chatbots.filter(bot => bot.id !== id));
+  };
+
+  const updateChatbot = (id: string, updates: Partial<ChatbotConfig>) => {
+    setChatbots(chatbots.map(bot => 
+      bot.id === id ? { ...bot, ...updates } : bot
+    ));
+  };
+
+  const generateEmbedCode = (chatbot: ChatbotConfig) => {
+    return `<!-- Chatbot Widget: ${chatbot.title} -->
+<script 
+  src="${backendUrl}/widget.js"
+  data-assistant-id="${chatbot.assistantId}"
+  data-title="${chatbot.title}"
+  data-color="${chatbot.primaryColor}"
+  data-position="${chatbot.position}"
+  data-welcome="${chatbot.welcomeMessage}"
+  async>
+</script>`;
+  };
+
+  const generateAdvancedEmbedCode = (chatbot: ChatbotConfig) => {
+    return `<!-- Advanced Chatbot Widget: ${chatbot.title} -->
 <script>
-  // Optional: Customize widget before loading
-  window.ChatbotWidgetConfig = {
-    // Override default position (optional)
-    // position: 'bottom-left', // or 'bottom-right'
-    
-    // Override default colors (optional)
-    // primaryColor: '#3B82F6',
-    
-    // Custom event handlers (optional)
+  // Optional: Custom configuration for ${chatbot.title}
+  window.ChatbotWidgetConfig_${chatbot.assistantId.replace(/[^a-zA-Z0-9]/g, '_')} = {
     onOpen: function() {
-      console.log('Chatbot opened');
+      console.log('${chatbot.title} chatbot opened');
       // Add your analytics tracking here
+      // gtag('event', 'chatbot_open', { assistant_id: '${chatbot.assistantId}' });
     },
     onClose: function() {
-      console.log('Chatbot closed');
+      console.log('${chatbot.title} chatbot closed');
     },
     onMessage: function(message, isUser) {
-      console.log('Message:', message, 'From user:', isUser);
+      console.log('${chatbot.title} message:', message, 'From user:', isUser);
     }
   };
 </script>
-<script src="${backendUrl}/widget.js" async></script>
+<script 
+  src="${backendUrl}/widget.js"
+  data-assistant-id="${chatbot.assistantId}"
+  data-title="${chatbot.title}"
+  data-color="${chatbot.primaryColor}"
+  data-position="${chatbot.position}"
+  data-welcome="${chatbot.welcomeMessage}"
+  async>
+</script>
 
-<!-- Optional: Control the widget programmatically -->
+<!-- Control the widget programmatically -->
 <script>
-  // Wait for widget to load, then you can use:
-  // ChatbotWidget.open()     - Open the chat
-  // ChatbotWidget.close()    - Close the chat
-  // ChatbotWidget.toggle()   - Toggle open/close
-  // ChatbotWidget.isOpen()   - Check if open
-  // ChatbotWidget.sendMessage('Hello') - Send a message
+  // Access this specific widget instance:
+  // window.ChatbotWidget_${chatbot.assistantId.replace(/[^a-zA-Z0-9]/g, '_')}.open()
+  // window.ChatbotWidget_${chatbot.assistantId.replace(/[^a-zA-Z0-9]/g, '_')}.close()
+  // window.ChatbotWidget_${chatbot.assistantId.replace(/[^a-zA-Z0-9]/g, '_')}.toggle()
 </script>`;
+  };
 
-  const handleCopy = (code: string) => {
+  const handleCopy = (code: string, id: string) => {
     navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setCopied(id);
+    setTimeout(() => setCopied(''), 2000);
   };
 
   const testWidget = () => {
@@ -124,222 +175,249 @@ const EmbedCode: React.FC = () => {
             </button>
           </div>
           <p className="text-xs text-gray-500 mt-1">
-            This URL will be used in the embed code. The script will automatically load from this server.
+            This URL will be used in the embed code. Only the OpenAI API key needs to be configured on the server.
           </p>
         </div>
       </div>
 
-      {/* Dynamic Script Benefits */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-6">
+      {/* Multi-Assistant Benefits */}
+      <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200 p-6">
         <div className="flex items-start space-x-3">
-          <div className="bg-blue-100 rounded-lg p-2">
-            <Code className="h-6 w-6 text-blue-600" />
+          <div className="bg-green-100 rounded-lg p-2">
+            <Code className="h-6 w-6 text-green-600" />
           </div>
           <div>
-            <h3 className="font-medium text-blue-900 mb-2">Dynamic Script System</h3>
-            <div className="text-sm text-blue-800 space-y-2">
-              <p>✅ <strong>No code changes needed</strong> - Update widget settings from admin panel</p>
-              <p>✅ <strong>Automatic updates</strong> - Widget always loads latest configuration</p>
-              <p>✅ <strong>Real-time changes</strong> - Colors, messages, and settings update instantly</p>
-              <p>✅ <strong>One-time setup</strong> - Embed once, manage forever</p>
+            <h3 className="font-medium text-green-900 mb-2">Multi-Assistant System</h3>
+            <div className="text-sm text-green-800 space-y-2">
+              <p>✅ <strong>One server, multiple chatbots</strong> - Use different Assistant IDs for different purposes</p>
+              <p>✅ <strong>Secure API key</strong> - Only stored on the server, never exposed to frontend</p>
+              <p>✅ <strong>Individual customization</strong> - Each chatbot can have unique colors, titles, and messages</p>
+              <p>✅ <strong>Easy deployment</strong> - Configure once on Render.com, use everywhere</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Simple Embed Code */}
+      {/* Chatbot Configurations */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium text-gray-900">Simple Integration</h3>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-medium text-gray-900">Chatbot Configurations</h3>
           <button
-            onClick={() => handleCopy(embedCode)}
-            className="flex items-center space-x-2 px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            onClick={addChatbot}
+            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
-            <Copy className="h-4 w-4" />
-            <span>{copied ? 'Copied!' : 'Copy Code'}</span>
+            <Plus className="h-4 w-4" />
+            <span>Add Chatbot</span>
           </button>
         </div>
 
-        <div className="relative">
-          <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm">
-            <code>{embedCode}</code>
-          </pre>
-        </div>
-        
-        <p className="text-sm text-gray-600 mt-3">
-          This is all you need! The script automatically loads your widget with current settings.
-        </p>
-      </div>
-
-      {/* Advanced Embed Code */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium text-gray-900">Advanced Integration</h3>
-          <button
-            onClick={() => handleCopy(advancedEmbedCode)}
-            className="flex items-center space-x-2 px-3 py-1 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-          >
-            <Copy className="h-4 w-4" />
-            <span>Copy Advanced</span>
-          </button>
-        </div>
-
-        <div className="relative">
-          <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm">
-            <code>{advancedEmbedCode}</code>
-          </pre>
-        </div>
-        
-        <p className="text-sm text-gray-600 mt-3">
-          Use this version for custom event tracking, programmatic control, or to override default settings.
-        </p>
-      </div>
-
-      {/* Render.com Deployment Guide */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Render.com Deployment Guide</h3>
-        
-        <div className="space-y-4">
-          <div className="flex items-start space-x-3">
-            <div className="bg-blue-100 rounded-full p-1 mt-0.5">
-              <span className="text-blue-600 font-semibold text-sm">1</span>
-            </div>
-            <div>
-              <h4 className="font-medium text-gray-900">Push to GitHub</h4>
-              <p className="text-sm text-gray-600 mt-1">
-                Push your project to a GitHub repository. Make sure the <code className="bg-gray-100 px-1 rounded">server/</code> folder is in the root.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start space-x-3">
-            <div className="bg-blue-100 rounded-full p-1 mt-0.5">
-              <span className="text-blue-600 font-semibold text-sm">2</span>
-            </div>
-            <div>
-              <h4 className="font-medium text-gray-900">Create Render Service</h4>
-              <p className="text-sm text-gray-600 mt-1">
-                Go to <a href="https://render.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">render.com</a>, 
-                create a new Web Service, and connect your GitHub repository.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start space-x-3">
-            <div className="bg-blue-100 rounded-full p-1 mt-0.5">
-              <span className="text-blue-600 font-semibold text-sm">3</span>
-            </div>
-            <div>
-              <h4 className="font-medium text-gray-900">Configure Service</h4>
-              <div className="text-sm text-gray-600 mt-1 space-y-1">
-                <p>• <strong>Root Directory:</strong> <code className="bg-gray-100 px-1 rounded">server</code></p>
-                <p>• <strong>Build Command:</strong> <code className="bg-gray-100 px-1 rounded">npm install</code></p>
-                <p>• <strong>Start Command:</strong> <code className="bg-gray-100 px-1 rounded">npm start</code></p>
+        <div className="space-y-6">
+          {chatbots.map((chatbot, index) => (
+            <div key={chatbot.id} className="border border-gray-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="font-medium text-gray-900">Chatbot #{index + 1}</h4>
+                {chatbots.length > 1 && (
+                  <button
+                    onClick={() => removeChatbot(chatbot.id)}
+                    className="text-red-600 hover:text-red-700 p-1"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
               </div>
-            </div>
-          </div>
 
-          <div className="flex items-start space-x-3">
-            <div className="bg-blue-100 rounded-full p-1 mt-0.5">
-              <span className="text-blue-600 font-semibold text-sm">4</span>
-            </div>
-            <div>
-              <h4 className="font-medium text-gray-900">Set Environment Variables</h4>
-              <div className="text-sm text-gray-600 mt-1">
-                <p>Add these environment variables in Render dashboard:</p>
-                <div className="bg-gray-50 p-3 rounded mt-2 font-mono text-xs">
-                  OPENAI_API_KEY=your_openai_api_key_here<br/>
-                  ASSISTANT_ID=your_assistant_id_here<br/>
-                  JWT_SECRET=your-random-secret-key-here<br/>
-                  ALLOWED_ORIGINS=*
+              <div className="grid md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Assistant ID *
+                  </label>
+                  <input
+                    type="text"
+                    value={chatbot.assistantId}
+                    onChange={(e) => updateChatbot(chatbot.id, { assistantId: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="asst_..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Title
+                  </label>
+                  <input
+                    type="text"
+                    value={chatbot.title}
+                    onChange={(e) => updateChatbot(chatbot.id, { title: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Customer Support"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Primary Color
+                  </label>
+                  <div className="flex space-x-2">
+                    <input
+                      type="color"
+                      value={chatbot.primaryColor}
+                      onChange={(e) => updateChatbot(chatbot.id, { primaryColor: e.target.value })}
+                      className="w-12 h-10 border border-gray-300 rounded-lg"
+                    />
+                    <input
+                      type="text"
+                      value={chatbot.primaryColor}
+                      onChange={(e) => updateChatbot(chatbot.id, { primaryColor: e.target.value })}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="#3B82F6"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Position
+                  </label>
+                  <select
+                    value={chatbot.position}
+                    onChange={(e) => updateChatbot(chatbot.id, { position: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="bottom-right">Bottom Right</option>
+                    <option value="bottom-left">Bottom Left</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Welcome Message
+                </label>
+                <textarea
+                  value={chatbot.welcomeMessage}
+                  onChange={(e) => updateChatbot(chatbot.id, { welcomeMessage: e.target.value })}
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Hello! How can I help you today?"
+                />
+              </div>
+
+              {/* Simple Embed Code */}
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <h5 className="font-medium text-gray-900">Simple Embed Code</h5>
+                    <button
+                      onClick={() => handleCopy(generateEmbedCode(chatbot), `simple-${chatbot.id}`)}
+                      className="flex items-center space-x-1 px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                    >
+                      <Copy className="h-3 w-3" />
+                      <span>{copied === `simple-${chatbot.id}` ? 'Copied!' : 'Copy'}</span>
+                    </button>
+                  </div>
+                  <pre className="bg-gray-900 text-gray-100 p-3 rounded text-xs overflow-x-auto">
+                    <code>{generateEmbedCode(chatbot)}</code>
+                  </pre>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <h5 className="font-medium text-gray-900">Advanced Embed Code</h5>
+                    <button
+                      onClick={() => handleCopy(generateAdvancedEmbedCode(chatbot), `advanced-${chatbot.id}`)}
+                      className="flex items-center space-x-1 px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+                    >
+                      <Copy className="h-3 w-3" />
+                      <span>{copied === `advanced-${chatbot.id}` ? 'Copied!' : 'Copy'}</span>
+                    </button>
+                  </div>
+                  <pre className="bg-gray-900 text-gray-100 p-3 rounded text-xs overflow-x-auto">
+                    <code>{generateAdvancedEmbedCode(chatbot)}</code>
+                  </pre>
                 </div>
               </div>
             </div>
-          </div>
-
-          <div className="flex items-start space-x-3">
-            <div className="bg-blue-100 rounded-full p-1 mt-0.5">
-              <span className="text-blue-600 font-semibold text-sm">5</span>
-            </div>
-            <div>
-              <h4 className="font-medium text-gray-900">Deploy & Test</h4>
-              <p className="text-sm text-gray-600 mt-1">
-                Click "Create Web Service" and wait for deployment. Test your widget script at: 
-                <code className="bg-gray-100 px-1 rounded ml-1">https://your-app.onrender.com/widget.js</code>
-              </p>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 
-      {/* Integration Instructions */}
+      {/* Multiple Widgets Example */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Integration Instructions</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Multiple Widgets Example</h3>
         
         <div className="space-y-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h4 className="font-medium text-blue-800 mb-2">Example Use Cases</h4>
+            <div className="text-sm text-blue-700 space-y-2">
+              <p>• <strong>Customer Support:</strong> General help and questions (bottom-right, blue)</p>
+              <p>• <strong>Sales Assistant:</strong> Product information and pricing (bottom-left, green)</p>
+              <p>• <strong>Technical Support:</strong> Technical issues and troubleshooting (custom position)</p>
+              <p>• <strong>HR Assistant:</strong> Employee questions and policies (different page)</p>
+              <p>• <strong>Product Guide:</strong> Feature explanations and tutorials (specific pages)</p>
+            </div>
+          </div>
+
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <div className="flex items-start space-x-3">
               <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
               <div>
-                <h4 className="font-medium text-yellow-800">Important Notes</h4>
+                <h4 className="font-medium text-yellow-800">Best Practices</h4>
                 <div className="mt-2 text-sm text-yellow-700 space-y-1">
-                  <p>• The widget script is dynamically generated and always reflects your current settings</p>
-                  <p>• Changes in the admin panel update the widget immediately on all websites</p>
-                  <p>• No need to update embed code when you change colors, messages, or settings</p>
-                  <p>• The script is cached for performance but updates when you modify configuration</p>
+                  <p>• Use different Assistant IDs for different purposes/knowledge bases</p>
+                  <p>• Avoid placing multiple widgets on the same page (use different positions if needed)</p>
+                  <p>• Use descriptive titles to help users understand each chatbot's purpose</p>
+                  <p>• Test each Assistant ID in OpenAI Playground before deploying</p>
+                  <p>• Consider using different colors to distinguish between chatbot types</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Render.com Setup */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Render.com Setup</h3>
+        
+        <div className="space-y-4">
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-start space-x-3">
+              <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+              <div>
+                <h4 className="font-medium text-green-800">Environment Variables Required</h4>
+                <div className="mt-2 text-sm text-green-700">
+                  <p>Only configure these on your Render.com server:</p>
+                  <div className="bg-green-100 p-3 rounded mt-2 font-mono text-xs">
+                    OPENAI_API_KEY=your_openai_api_key_here<br/>
+                    JWT_SECRET=your-random-secret-key-here<br/>
+                    ALLOWED_ORIGINS=*
+                  </div>
+                  <p className="mt-2"><strong>Note:</strong> Assistant IDs are now configured in the embed code, not on the server!</p>
                 </div>
               </div>
             </div>
           </div>
 
           <div className="grid md:grid-cols-2 gap-4">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <h4 className="font-medium text-green-800 mb-2">✅ What Updates Automatically</h4>
-              <ul className="text-sm text-green-700 space-y-1">
-                <li>• Widget colors and styling</li>
-                <li>• Welcome messages</li>
-                <li>• Widget title and position</li>
-                <li>• OpenAI assistant responses</li>
-              </ul>
-            </div>
-
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-medium text-blue-800 mb-2">🔧 What Requires Code Update</h4>
+              <h4 className="font-medium text-blue-800 mb-2">✅ Server Configuration</h4>
               <ul className="text-sm text-blue-700 space-y-1">
-                <li>• Backend server URL changes</li>
-                <li>• Major widget functionality changes</li>
-                <li>• Custom event handlers</li>
-                <li>• Advanced customizations</li>
+                <li>• One OpenAI API key for all chatbots</li>
+                <li>• Secure environment variables</li>
+                <li>• CORS enabled for all domains</li>
+                <li>• Dynamic widget script generation</li>
               </ul>
             </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Server Requirements */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Server Requirements</h3>
-        
-        <div className="space-y-3">
-          <div className="flex items-center space-x-3">
-            <ExternalLink className="h-4 w-4 text-gray-400" />
-            <span className="text-sm text-gray-700">Node.js backend deployed and running</span>
-          </div>
-          <div className="flex items-center space-x-3">
-            <ExternalLink className="h-4 w-4 text-gray-400" />
-            <span className="text-sm text-gray-700">OpenAI API key configured as environment variable</span>
-          </div>
-          <div className="flex items-center space-x-3">
-            <ExternalLink className="h-4 w-4 text-gray-400" />
-            <span className="text-sm text-gray-700">OpenAI Assistant ID configured as environment variable</span>
-          </div>
-          <div className="flex items-center space-x-3">
-            <ExternalLink className="h-4 w-4 text-gray-400" />
-            <span className="text-sm text-gray-700">CORS enabled for your website domains</span>
-          </div>
-          <div className="flex items-center space-x-3">
-            <ExternalLink className="h-4 w-4 text-gray-400" />
-            <span className="text-sm text-gray-700">Widget script endpoint: <code className="bg-gray-100 px-1 rounded">/widget.js</code></span>
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+              <h4 className="font-medium text-purple-800 mb-2">🎯 Frontend Configuration</h4>
+              <ul className="text-sm text-purple-700 space-y-1">
+                <li>• Assistant ID in embed code</li>
+                <li>• Custom colors and titles</li>
+                <li>• Position and welcome messages</li>
+                <li>• No server restart needed</li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
