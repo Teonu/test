@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: chatbot-widget-backend
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: OPENAI_API_KEY
+        fromDatabase: false
+      - key: ASSISTANT_ID
+        fromDatabase: false
+      - key: JWT_SECRET
+        fromDatabase: false
+      - key: ALLOWED_ORIGINS
+        value: "*"

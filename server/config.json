@@ -1,0 +1,10 @@
+{
+  "apiKey": "",
+  "assistantId": "",
+  "welcomeMessage": "Hello! How can I help you today?",
+  "widgetConfig": {
+    "primaryColor": "#3B82F6",
+    "position": "bottom-right",
+    "title": "Chat Support"
+  }
+}
