@@ -6,7 +6,7 @@ export const API_CONFIG = {
   },
   // For production - updated with your live backend URL
   production: {
-    baseURL: 'https://chatbot-widget-backend-uqa3.onrender.com/api'
+    baseURL: 'https://test-ctza.onrender.com/api'
   }
 };
 
