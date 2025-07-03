@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chatbot Widget Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 40px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: white;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    p {
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+      opacity: 0.9;
+    }
+    
+    .info-box {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 2rem;
+      margin: 2rem 0;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .status {
+      display: inline-block;
+      padding: 8px 16px;
+      background: rgba(34, 197, 94, 0.2);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 8px;
+      margin: 10px;
+      font-size: 0.9rem;
+    }
+    
+    .code {
+      background: rgba(0,0,0,0.3);
+      padding: 1rem;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      text-align: left;
+      margin: 1rem 0;
+      overflow-x: auto;
+    }
+    
+    .highlight {
+      color: #fbbf24;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🤖 Chatbot Widget Test</h1>
+    <p>Test pagina voor het nieuwe multi-assistant chatbot systeem</p>
+    
+    <div class="info-box">
+      <h2>Systeem Status</h2>
+      <div class="status">✅ Backend Server: test-ctza.onrender.com</div>
+      <div class="status">✅ Assistant ID: asst_YNRH9ORY5f4NPGN88uQy7LtN</div>
+      <div class="status">✅ Widget Script: Geladen</div>
+      <div class="status">✅ Multi-Assistant: Actief</div>
+    </div>
+    
+    <div class="info-box">
+      <h2>Hoe het werkt</h2>
+      <p>Het nieuwe systeem gebruikt <span class="highlight">Assistant IDs in de embed code</span> in plaats van op de server:</p>
+      
+      <div class="code">
+&lt;script 
+  src="https://test-ctza.onrender.com/widget.js"
+  data-assistant-id="<span class="highlight">asst_YNRH9ORY5f4NPGN88uQy7LtN</span>"
+  data-title="<span class="highlight">Customer Support</span>"
+  data-color="<span class="highlight">#3B82F6</span>"
+  async&gt;
+&lt;/script&gt;
+      </div>
+      
+      <p><strong>Voordelen:</strong></p>
+      <ul style="text-align: left; max-width: 600px; margin: 0 auto;">
+        <li>🔐 <strong>Veilige API key</strong> - Alleen op de server opgeslagen</li>
+        <li>🎯 <strong>Meerdere chatbots</strong> - Verschillende Assistant IDs voor verschillende doeleinden</li>
+        <li>🎨 <strong>Individuele aanpassing</strong> - Elke chatbot kan unieke kleuren en berichten hebben</li>
+        <li>⚡ <strong>Geen server herstart</strong> - Voeg nieuwe chatbots toe zonder server wijzigingen</li>
+      </ul>
+    </div>
+    
+    <div class="info-box">
+      <h2>Test de Chatbot</h2>
+      <p>Klik op de chatbot knop in de rechter benedenhoek om te testen!</p>
+      <p><em>De chatbot gebruikt jouw OpenAI Assistant met ID: asst_YNRH9ORY5f4NPGN88uQy7LtN</em></p>
+    </div>
+    
+    <div class="info-box">
+      <h2>Volgende Stappen</h2>
+      <ol style="text-align: left; max-width: 600px; margin: 0 auto;">
+        <li><strong>Zorg dat je OpenAI API key is ingesteld</strong> op Render.com als environment variable</li>
+        <li><strong>Test de chatbot</strong> door erop te klikken</li>
+        <li><strong>Maak meer chatbots</strong> met verschillende Assistant IDs</li>
+        <li><strong>Embed op je website</strong> met de gegenereerde code</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- Chatbot Widget Script -->
+  <script 
+    src="https://test-ctza.onrender.com/widget.js"
+    data-assistant-id="asst_YNRH9ORY5f4NPGN88uQy7LtN"
+    data-title="Customer Support"
+    data-color="#3B82F6"
+    async>
+  </script>
+
+  <!-- Debug Script -->
+  <script>
+    // Debug informatie
+    console.log('🤖 Chatbot Widget Test Page Loaded');
+    console.log('📡 Backend URL: https://test-ctza.onrender.com');
+    console.log('🆔 Assistant ID: asst_YNRH9ORY5f4NPGN88uQy7LtN');
+    
+    // Test backend verbinding
+    fetch('https://test-ctza.onrender.com/health')
+      .then(response => response.json())
+      .then(data => {
+        console.log('✅ Backend Health Check:', data);
+      })
+      .catch(error => {
+        console.error('❌ Backend Health Check Failed:', error);
+      });
+    
+    // Test widget script
+    fetch('https://test-ctza.onrender.com/widget.js')
+      .then(response => {
+        if (response.ok) {
+          console.log('✅ Widget Script Loaded Successfully');
+        } else {
+          console.error('❌ Widget Script Failed to Load');
+        }
+      })
+      .catch(error => {
+        console.error('❌ Widget Script Error:', error);
+      });
+    
+    // Check if widget loaded after 2 seconds
+    setTimeout(() => {
+      if (window.ChatbotWidget) {
+        console.log('✅ Chatbot Widget API Available:', window.ChatbotWidget);
+      } else {
+        console.error('❌ Chatbot Widget API Not Available');
+      }
+    }, 2000);
+  </script>
+</body>
+</html>
